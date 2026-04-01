@@ -35,19 +35,27 @@ Make sure you get a version number of some kind.
 
 ## 1. Fork this repo
 
-1. Click **Fork** on GitHub.
-2. Create your own copy under your account.
+1. Click **Use This Template > Create a new repository** in the top right of this GitHub repo. *Do not edit this repo in codespaces*.
+2. Make sure you have `Include all branches` turned ON.
 
 ## 2. Clone and run locally
+
+You'll need to run the following two lines if you're working in a local IDE.
 
 ```bash
 git clone https://github.com/<your-username>/<your-fork-repo>.git
 cd <your-fork-repo>
+```
+
+Whether you're on your local machine or in codespaces, you'll then run these three lines:
+
+```bash
 npm install
+nvm use
 npm run dev
 ```
 
-Open the local URL shown in your terminal (usually http://localhost:5173).
+Open the local URL shown in your terminal (usually http://localhost:5173). You can `Ctrl + Click` (PC)/`Cmd + Click` (Mac) on the link in the terminal, as well.
 
 ## 3. One-time setup for GitHub Pages (manual deploy)
 
