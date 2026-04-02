@@ -1,5 +1,5 @@
 import './styles.css'
-import { Chart, plugins, scales } from 'chart.js/auto' // A complete build of chart.js - not advised for production, but okay for our purposes
+// import { Chart, plugins, scales } from 'chart.js/auto' // A complete build of chart.js - not advised for production, but okay for our purposes
 import { csvParse } from 'd3' // A single exported module from d3 for reading csv files
 
 async function loadAndChartData() {
