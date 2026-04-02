@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: './',
+  base: './328T628T-starter-repo/',
+  build: {
+    outDir: 'docs',
+    emptyOutDir: true
+  }
 })
