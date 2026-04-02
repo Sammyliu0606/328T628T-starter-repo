@@ -7,9 +7,24 @@
 	</head>
 	<body>
 		<div id="app">
-			<h1>Hello world!</h1>
-			<p>You can use this page as a starter for your projects.</p>
+			<section class="chart-section">
+				<h1>Fatal police shootings slightly increase across years</h1>
+				<p>U.S. fatal shootings are over seven times higher than in Canada</p>
+				<div class="canvas-container"> <canvas id="chart01"></canvas>
+				</div>
+				<p>Source: Dummy Data</p>
+			</section>
+
+			<section class="chart-section bubble-chart">
+				<h1>Tracking 12 Years of Global AI Progress</h1>
+				<p>Europe and North America lead in enterprise integration despite modest government spending, while Africa lags in both. Asia reveals a stark regional divide.</p>
+				<div class="canvas-container">
+					<canvas id="chart02"></canvas>
+				</div>
+				<p>Source: Abid Hussain. (2026). Global AI Index (2015–2026): Readiness & Rankings. Kaggle</p>
+			</section>
 		</div>
 		<script type="module" src="/src/main.js"></script>
+		<script src='https://www.jsdelivr.com/package/npm/chart.js'></script>
 	</body>
 </html>

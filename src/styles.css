@@ -26,6 +26,6 @@ body{
 
 a{color:var(--accent);}
 
-#chart {
-  width: 50%;
+.canvas-container {
+    width: 100%;
 }
