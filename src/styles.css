@@ -1,43 +1,71 @@
-:root{
-  --bg: #28417a;
+:root {
+  --bg: #1a1a2e;
   --card: #0b1220;
   --muted: #94a3b8;
-  --accent: #1d6789;
 }
 
-html,body,#app{height:100%;}
-body{
-  margin:0;
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: linear-gradient(180deg,var(--bg),#071028);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  background: linear-gradient(180deg, var(--bg), #071028);
+  background-attachment: fixed;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   user-select: none;
 }
 
-#app{
-  background: rgb(255, 255, 255);
-  padding:28px;
-  border-radius:10px;
-  box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+#app {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(2, 6, 23, 0.6);
   width: 90vw;
-}
-
-a{color:var(--accent);}
-
-sup {
-  font-size: 0.6em;
-  vertical-align: super;
+  margin: 40px 0;
 }
 
 h1 {
-  font-size: 1.55em;
-  margin: 12px 0;
+  font-size: 1.4em;
   font-weight: 600;
+  margin: 0 0 24px 0;
 }
 
-p {
-  margin: 0;
+#legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.8rem;
+  color: #444;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+#tooltip {
+  position: absolute;
+  background: white;
+  color: black;
+  border: 1px solid #ccc;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: none;
+  pointer-events: none;
+  max-width: 260px;
+  z-index: 10;
 }

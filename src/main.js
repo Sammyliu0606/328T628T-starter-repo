@@ -1,219 +1,134 @@
 import './styles.css'
 import * as d3 from 'd3'
-import { annotation } from 'd3-svg-annotation'
 
-const mdColor = "#e7ae34"
-const usColor = "#2b2bb0"
+// 1. LOAD DATA
+const raw = await d3.csv("data/labeling.csv")
 
-// 1. ACCESS DATA *******************************
-const data = await d3.csv("data/3party-data.csv")
+const data = raw.map(d => ({
+  id: d.event_id,
+  title: d.title,
+  volume: +d.volume,
+  open_date: new Date(d.open_time),
+  close_date: new Date(d.close_time),
+  platform: d.platform,
+  classification: d.classification,
+}))
 
-// 2. DRAW CANVAS  *******************************
-// const margin = {
-//   top: 50,
-//   right: 30,
-//   bottom: 50,
-//   left: 20
-// }
-// const width = 800 - margin.left - margin.right
-// const height = 500 - margin.top - margin.bottom
+// 2. CATEGORY CONFIG
+const categoryConfig = {
+  "1_Violence Required":             { label: "Death / Violence required", color: "#c92a2a" },
+  "2_Coercion Required":             { label: "Coercion required",         color: "#e85d04" },
+  "3_Violence / Coercion Plausible": { label: "Violence plausible",        color: "#fab005" },
+  "4_Mass Harm Context":             { label: "Mass harm context",         color: "#868e96" },
+  "5_Neutral":                       { label: "Neutral",                   color: "#dee2e6" },
+}
 
-// const svg = d3.select("svg")
-//   .attr("width", width + margin.left + margin.right)
-//   .attr("height", height + margin.top + margin.bottom)
+function getColor(classification) {
+  return categoryConfig[classification]?.color ?? "#dee2e6"
+}
 
-// const chart = svg.append("g")
-//   .classed("chart", true)
-//   .attr("transform", `translate(${margin.left}, ${margin.top})`)
+// 3. LEGEND
+const legend = d3.select("#legend")
+legend.selectAll(".legend-item")
+  .data(Object.entries(categoryConfig))
+  .join("div")
+  .classed("legend-item", true)
+  .html(([, { label, color }]) => `
+    <span class="legend-swatch" style="background:${color}"></span>
+    <span class="legend-label">${label}</span>
+  `)
 
-// 3. CREATE X AXIS *******************************
-// const xScale = d3
-//   .scaleBand()
-//   .domain(data.map(d => +d.election))
-//   .range([0, width])
-//   .padding(0.4)
+// 4. DRAW CANVAS
+const margin = { top: 40, right: 60, bottom: 40, left: 100 }
+const totalWidth = document.getElementById("chart").clientWidth //When SVG renders, it will take the full width of the container div#chart
+const width = totalWidth - margin.left - margin.right
 
-// const xAxis = chart
-//   .append("g")
-//   .attr("transform", `translate(0, ${height})`)
-//   .classed("x-axis", true)
-//   .call(d3.axisBottom(xScale))
-//     .append("text")
-//       .attr("text-anchor", "center")
-//       .attr("fill", "black")
-//       .attr("font-size", "1.25em")
-//       .attr("x", (width / 2))
-//       .attr("y", 40)
-//       .text("Election Year")
+const [minDate, maxDate] = d3.extent(data, d => d.open_date)
+const monthTicks = d3.timeMonth.range( //Draw lines and labels for each month
+  d3.timeMonth.floor(minDate),
+  d3.timeMonth.offset(d3.timeMonth.ceil(maxDate), 1)
+)
+const height = monthTicks.length * 100
 
-// 4. CREATE Y AXIS *******************************
-// const yScale = d3
-//   .scaleLinear()
-//   // .domain([0, d3.max(data, d => +d.p_share_us)])
-//   .domain([0, 20])
-//   .range([height, 0])
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("width", totalWidth)
+  .attr("height", height + margin.top + margin.bottom)
 
-// const yAxis = chart
-//   .append("g")
-//   .attr("transform", `translate(0, 0)`)
-//   .classed("y-axis", true)
-//   .call(
-//     d3.axisLeft(yScale)
-//       .tickValues([0, 5, 10, 15, 20])
-//       .tickFormat(d => d % 10 === 0 ? d : "")
-//   )
-//     .append("text")
-//       .attr("text-anchor", "start")
-//       .attr("fill", "black")
-//       .attr("font-size", "1.25em")
-//       .attr("x", -20)
-//       .attr("y", -10)
-//       .text("Percent of popular vote to 3rd Party")
+const chart = svg.append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`)
 
-// 5. DRAW DATA    *******************************
-// const mdBars = chart.selectAll(".bar")
-//   .data(data)
-//   .join("rect")
-//   .classed("mdBar", true)
-//   .attr("x", d => xScale(+d.election))
-//   .attr("y", d => yScale(+d.p_share_md))
-//   .attr("width", xScale.bandwidth() / 2)
-//   .attr("height", d => height - yScale(+d.p_share_md))
-//   .attr("fill", mdColor)
-//   .attr("opacity", 0.7)
-//   .attr("id", d => `mdBar-${d.election}`)
+// 4. SCALES
+const yScale = d3.scaleTime()
+  .domain([monthTicks[0], monthTicks[monthTicks.length - 1]])
+  .range([0, height])
 
-// const usBars = chart.selectAll(".bar2")
-//   .data(data)
-//   .join("rect")
-//   .classed("usBar", true)
-//   .attr("x", d => xScale(+d.election) + xScale.bandwidth() / 2)
-//   .attr("y", d => yScale(+d.p_share_us))
-//   .attr("width", xScale.bandwidth() / 2)
-//   .attr("height", d => height - yScale(+d.p_share_us))
-//   .attr("fill", usColor)
-//   .attr("opacity", 0.7)
-//   .attr("id", d => `usBar-${d.election}`)
+const rScale = d3.scaleSqrt() 
+  .domain([0, d3.max(data, d => d.volume)])
+  .range([4, 40])
 
-// 6. ADD INTERACTIVITY  *******************************
-// let tooltipData = null
-// function filterTooltipData(d, barType) {
-//   const election = +d.election
-//   const vote_share = barType === "mdBar" ? +d.p_share_md : +d.p_share_us
-//   const geography = barType === "mdBar" ? "Maryland" : "United States"
-//   const color = barType === "mdBar" ? mdColor : usColor
-//   tooltipData = {
-//     election: election,
-//     vote_share: vote_share,
-//     geography: geography,
-//     color: color
-//   }
-// }
+// 5. MONTH LINES + LABELS
+chart.selectAll(".month-line")
+  .data(monthTicks)
+  .join("line")
+  .classed("month-line", true)
+  .attr("x1", 0)
+  .attr("x2", width)
+  .attr("y1", d => yScale(d))
+  .attr("y2", d => yScale(d))
+  .attr("stroke", "#e0e0e0")
+  .attr("stroke-width", 1)
 
-// function positionTooltip(event) {
-//   const [x, y] = d3.pointer(event)
-//   tooltip
-//     .style("left", `${x + margin.left}px`)
-//     .style("top", `${y}px`)
-// }
+chart.selectAll(".month-label")
+  .data(monthTicks)
+  .join("text")
+  .classed("month-label", true)
+  .attr("x", -10)
+  .attr("y", d => yScale(d))
+  .attr("text-anchor", "end")
+  .attr("dominant-baseline", "middle")
+  .attr("font-size", "0.75rem")
+  .attr("fill", "#666")
+  .text(d => d3.timeFormat("%b %Y")(d))
 
-// const tooltip = d3.select("#tooltip")
-//   .data([tooltipData])
-//   .style("position", "absolute")
-//   .style("background", "rgb(255, 255, 255)")
-//   .style("color", "black")
-//   .style("z-index", "10")
-//   .style("display", "none")
-//   .style("padding", "8px")
-//   .style("border", "1px solid #939393")
-//   .style("drop-shadow", "0 6px 24px rgba(20, 27, 59, 0.79)")
+// 6. PREPARE BUBBLE DATA
+const cx = width / 2  // center x of the timeline
 
-// d3.selectAll([...mdBars.nodes(), ...usBars.nodes()])
-//   .attr("cursor", "pointer")
-//   .on("mouseover", function(event, d) {
-//     const targetBar = d3.select(this)
-//     const targetBarType = targetBar.attr("class")
+const nodes = data.map(d => ({ //Create nodes object for each bubble that contains everything needed to draw and simulate it
+  ...d, //Copy all fields (title, volume, open_date, etc.) from original data
+  r: rScale(d.volume), //Encode volume as bubble radius
+  targetY: yScale(d.open_date), // Position bubbles based on open_date
+}))
 
-//     filterTooltipData(d, targetBarType)
-//     tooltip
-//       .style("display", "block")
-//       .html(`
-//         <strong style="color: ${tooltipData.color}; font-weight: bold;">${tooltipData.geography}</strong>
-//         <br>
-//         Election: ${tooltipData.election}
-//         <br>
-//         Vote Share: ${tooltipData.vote_share}%
-//       `)
+nodes.forEach(d => {
+  d.x = cx // Start all bubbles in the center
+  d.y = d.targetY // Start all bubbles at their target y position
+})
 
-//     positionTooltip(event)
+// 7. D3-FORCE SIMULATION
+const simulation = d3.forceSimulation(nodes) //Use forceSimulation to avoid bubble overlap
+  .force("y", d3.forceY(d => d.targetY).strength(0.6)) // Rather strong force to pull bubbles to target y position
+  .force("x", d3.forceX(cx).strength(0.05)) // Weak force to keep bubbles centered on timeline -> allows some horizontal movement
+  .force("collide", d3.forceCollide(d => d.r + 3).iterations(3)) 
+  .force("bounds", () => {
+    nodes.forEach(d => {
+      d.x = Math.max(d.r, Math.min(width - d.r, d.x)) // keep bubbles within horizontal bounds (can't go further left or right than its own radius)
+      d.y = Math.max(d.r, Math.min(height - d.r, d.y))
+    })
+  })
+  .stop() // prevent simulation run with animation loop
 
-//     targetBar.attr("opacity", 1)
-//   })
-//   .on("mousemove", function(event) {
-//     positionTooltip(event)
-//   })
-//   .on("mouseout", function(event, d) {
-//     d3.select(this)
-//       .attr("opacity", 0.7)
-//     tooltip.style("display", "none")
-//   })
+for (let i = 0; i < 500; i++) simulation.tick() //manually run the simulation for a fixed number of iterations to resolve overlaps and find stable positions
 
-// 7. ANNOTATIONS   *******************************
-// Based on this custom annotations library: https://d3-annotation.susielu.com/
-// const annotations = [
-//   {
-//     note: {
-//       title: "Ross Perot",
-//       label: "won over 14% of the Maryland vote as an independent candidate in 1992.",
-//       wrap: 400,  // size
-
-//     },
-//     connector: {
-//       end: "none",        
-//       type: "line",       
-//       points: 1,           
-//       lineType : "horizontal"
-//     },
-//     color: mdColor,
-//     x: xScale(1992) + xScale.bandwidth() / 2,
-//     y: yScale(data[0].p_share_md),
-//     dy: 0,
-//     dx: 100
-//   }
-// ]
-  
-// const makeAnnotations = annotation()
-//   .annotations(annotations)
-    
-// chart.append("g")
-//   .call(makeAnnotations)
-//   .attr("z-index", "-1")
-
-// 8. LEGEND  *******************************
-// const legend = svg.append("g")
-//   .classed("legend", true)
-//   .attr("transform", `translate(0, 0)`)
-
-// legend.append("rect")
-//   .attr("x", 0)
-//   .attr("y", 0)
-//   .attr("width", 15)
-//   .attr("height", 15)
-//   .attr("fill", mdColor)
-
-// legend.append("text")
-//   .attr("x", 25)
-//   .attr("y", 12)
-//   .text("Maryland")
-
-// legend.append("rect")
-//   .attr("x", 110)
-//   .attr("y", 0)
-//   .attr("width", 15)
-//   .attr("height", 15)
-//   .attr("fill", usColor)
-
-// legend.append("text")
-//   .attr("x", 135)
-//   .attr("y", 12)
-//   .text("United States")
+// 8. DRAW BUBBLES
+chart.selectAll(".bubble")
+  .data(nodes)
+  .join("circle")
+  .classed("bubble", true)
+  .attr("cx", d => d.x)
+  .attr("cy", d => d.y)
+  .attr("r", d => d.r)
+  .attr("fill", d => getColor(d.classification))
+  .attr("stroke", "#fff")
+  .attr("stroke-width", 0.5)
+  .attr("opacity", 0.85)
