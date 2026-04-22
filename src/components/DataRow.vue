@@ -9,9 +9,13 @@ const props = defineProps({
 </script>
 
 <template>
-  <div>
-    <p>DataRow component</p>
-  </div>
+  <tr>
+    <td>{{ data.Agency }}</td>
+    <td>{{ data.CreatedDate }}</td>
+    <td>{{ data.CloseDate }}</td>
+    <td>{{ data.PoliceDistrict }}</td>
+    <td>{{ data.Neighborhood }}</td>
+  </tr>
 </template>
 
 <style scoped>

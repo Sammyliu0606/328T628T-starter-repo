@@ -1,9 +1,21 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import * as d3 from 'd3'
 import { DataRow } from './components'
 
 const dataArray = ref([])
+const currentPage = ref(1)
+const rowsPerPage = 10
+const pageData = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage
+  return dataArray.value.slice(start, start + rowsPerPage)
+})
+const totalPages = computed(() => Math.ceil(dataArray.value.length / rowsPerPage))
+
+function goToPage(page) {
+  currentPage.value = page
+}
+
 
 onMounted(async () => {
   const parseDate = d3.timeParse('%-m/%-d/%Y %I:%M:%S %p')
@@ -39,11 +51,30 @@ onMounted(async () => {
     <div v-if="dataArray.length > 0">
       <p>Data loaded: {{ dataArray.length }} records</p>
     </div>
-    <DataRow 
-      v-for="(data, index) in dataArray.slice(0, 5)" 
-      :key="index" 
-      :data="data"
-    />
+    <table>
+      <thead>
+        <tr>
+          <th>Agency</th>
+          <th>CreatedDate</th>
+          <th>CloseDate</th>
+          <th>PoliceDistrict</th>
+          <th>Neighborhood</th>
+        </tr>
+      </thead>
+      <tbody>
+        <DataRow 
+          v-for="(data, index) in pageData" 
+          :key="index" 
+          :data="data"
+        />
+      </tbody>
+    </table>
+    <div class="pagination">
+      <button :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">Next</button>
+    </div>
+
   </div>
 </template>
 
